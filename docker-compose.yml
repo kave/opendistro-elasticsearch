@@ -1,0 +1,99 @@
+version: '3.8'
+services:
+  es-node1:
+    container_name: es-node1
+    image: amazon/opendistro-for-elasticsearch:1.8.0
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    ports:
+      - 9200:9200
+    environment:
+      - node.name=es-node1
+      - discovery.seed_hosts=es-node2,es-node3
+    env_file:
+      - ./config/cluster.conf
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the Elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - ./tmp/es-data1:/usr/share/elasticsearch/data
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+      - ./certs/root-ca.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./certs/node1.pem:/usr/share/elasticsearch/config/esnode.pem
+      - ./certs/node1.key:/usr/share/elasticsearch/config/esnode.key
+    networks:
+      - elastic
+    restart: on-failure
+  es-node2:
+    container_name: es-node2
+    image: amazon/opendistro-for-elasticsearch:1.8.0
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    environment:
+      - node.name=es-node2
+      - discovery.seed_hosts=es-node1,es-node3
+    env_file:
+      - ./config/cluster.conf
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./tmp/es-data2:/usr/share/elasticsearch/data
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+      - ./certs/root-ca.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./certs/node2.pem:/usr/share/elasticsearch/config/esnode.pem
+      - ./certs/node2.key:/usr/share/elasticsearch/config/esnode.key
+    networks:
+      - elastic
+    restart: on-failure
+  es-node3:
+    container_name: es-node3
+    image: amazon/opendistro-for-elasticsearch:1.8.0
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    environment:
+      - node.name=es-node3
+      - discovery.seed_hosts=es-node1,es-node2
+    env_file:
+      - ./config/cluster.conf
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./tmp/es-data3:/usr/share/elasticsearch/data
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+      - ./certs/root-ca.pem:/usr/share/elasticsearch/config/root-ca.pem
+      - ./certs/node3.pem:/usr/share/elasticsearch/config/esnode.pem
+      - ./certs/node3.key:/usr/share/elasticsearch/config/esnode.key
+    networks:
+      - elastic
+    restart: on-failure
+volumes:
+  es-data1:
+  es-data2:
+  es-data3:
+
+networks:
+  elastic:
+    driver: bridge
